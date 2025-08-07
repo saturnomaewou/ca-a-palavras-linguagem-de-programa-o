@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Maid Café</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: sans-serif;
+      background: #ffeef0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h1 {
+      margin-top: 20px;
+      color: #c2185b;
+    }
+
+    #stats {
+      margin: 10px 0;
+      font-size: 18px;
+      color: #555;
+    }
+
+    .game-area {
+      display: flex;
+      gap: 20px;
+    }
+
+    .customers {
+      width: 500px;
+      height: 300px;
+      background: #fff0f5;
+      border: 2px solid #c2185b;
+      display: flex;
+      flex-wrap: wrap;
+      align-content: flex-start;
+      padding: 10px;
+      box-sizing: border-box;
+    }
+
+    .customer {
+      position: relative;
+      width: 100px;
+      height: 100px;
+      margin: 5px;
+      background: #f8bbd0;
+      border: 2px solid #ad1457;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .customer .order {
+      font-size: 32px;
+      margin-bottom: 5px;
+    }
+
+    .customer .label {
+      font-size: 12px;
+      color: #333;
+    }
+
+    .menu {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .menu button {
+      width: 120px;
+      padding: 10px;
+      font-size: 20px;
+      border: none;
+      border-radius: 6px;
+      background: #f06292;
+      color: white;
+      cursor: pointer;
+    }
+
+    .menu button.selected {
+      background: #c2185b;
+    }
+
+    #tray {
+      margin-top: 10px;
+      font-size: 24px;
+      min-height: 32px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Maid Café</h1>
+  <div id="stats">Pontos: 0 | Vidas: 3</div>
+  <div class="game-area">
+    <div class="customers" id="customers"></div>
+    <div class="menu">
+      <button data-item="☕️">Café ☕️</button>
+      <button data-item="🍵">Chá 🍵</button>
+      <button data-item="🍰">Bolo 🍰</button>
+      <div id="tray">Bandeja: —</div>
+    </div>
+  </div>
+
+  <script>
+    const customersEl = document.getElementById('customers');
+    const statsEl     = document.getElementById('stats');
+    const menuButtons = document.querySelectorAll('.menu button');
+    const trayEl      = document.getElementById('tray');
+
+    let score      = 0;
+    let lives      = 3;
+    let trayItem   = '';
+    let customerId = 0;
+
+    const items = ['☕️', '🍵', '🍰'];
+
+    function updateStats() {
+      statsEl.textContent = `Pontos: ${score} | Vidas: ${lives}`;
+    }
+
+    function spawnCustomer() {
+      if (lives <= 0) return;
+
+      const order = items[Math.floor(Math.random() * items.length)];
+      const id    = ++customerId;
+
+      const div = document.createElement('div');
+      div.className     = 'customer';
+      div.dataset.id    = id;
+      div.innerHTML = `
+        <div class="order">${order}</div>
+        <div class="label">Clique para servir</div>
+      `;
+
+      div.addEventListener('click', () => serveCustomer(id, order));
+      customersEl.appendChild(div);
+
+      // paciência: cliente vai embora após 8s
+      setTimeout(() => {
+        if (div.parentNode) {
+          customersEl.removeChild(div);
+          lives--;
+          updateStats();
+          checkGameOver();
+        }
+      }, 8000);
+    }
+
+    function serveCustomer(id, order) {
+      if (trayItem === '') return;
+
+      const customerDiv = document.querySelector(`.customer[data-id="${id}"]`);
+      if (!customerDiv) return;
+
+      if (trayItem === order) {
+        customersEl.removeChild(customerDiv);
+        score += 10;
+      } else {
+        lives--;
+      }
+
+      trayItem = '';
+      trayEl.textContent = 'Bandeja: —';
+      menuButtons.forEach(b => b.classList.remove('selected'));
+      updateStats();
+      checkGameOver();
+    }
+
+    function checkGameOver() {
+      if (lives <= 0) {
+        alert(`Fim de jogo! Sua pontuação: ${score}`);
+        location.reload();
+      }
+    }
+
+    // seleção de item no cardápio
+    menuButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        menuButtons.forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        trayItem = btn.dataset.item;
+        trayEl.textContent = 'Bandeja: ' + trayItem;
+      });
+    });
+
+    // inicia com um cliente
+    spawnCustomer();
+
+    // gera novos clientes a cada 3 segundos
+    setInterval(spawnCustomer, 3000);
+
+    updateStats();
+  </script>
+</body>
+</html>
